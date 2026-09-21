@@ -315,6 +315,17 @@
       </div>
 
       <div class="setting-row">
+        <label class="setting-label setting-label-row" for="landscape-toggle">
+          <span>Горизонтальный экран + полный экран</span>
+          <span class="switch">
+            <input type="checkbox" id="landscape-toggle" checked>
+            <span class="switch-slider"></span>
+          </span>
+        </label>
+        <p class="camera-desc">Как в настоящих играх: на телефоне игра сама встаёт горизонтально и на весь экран. Работает при старте боя.</p>
+      </div>
+
+      <div class="setting-row">
         <span class="setting-label">Управление (мобилки и ПК с тачем)</span>
         <div class="quality-buttons" id="controls-buttons">
           <button class="quality-btn" data-controls="joystick">🕹 Джойстик</button>
@@ -455,19 +466,6 @@
       </div>
     </div>
     <div class="orbit-hint" id="orbit-hint">👆 веди пальцем по экрану — обзор · щипок — зум</div>
-  </div>
-
-  <!-- Автоповорот для телефона: предложить landscape при входе -->
-  <div id="rotate-screen" class="win-screen">
-    <div class="win-card">
-      <div class="win-icon">📱</div>
-      <h2 class="win-title">Играть горизонтально?</h2>
-      <p class="win-sub">Включи автоповорот — арена шире и удобнее. Или играй как есть.</p>
-      <div class="win-actions">
-        <button class="settings-btn primary" id="btn-rotate-on">Включить</button>
-        <button class="settings-btn" id="btn-rotate-off">Не надо</button>
-      </div>
-    </div>
   </div>
 
   <!-- Экран выхода: игра реально закрывается -->

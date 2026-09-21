@@ -1679,6 +1679,9 @@ button.weapon-card:active { --pl: 2px; transform: translateY(6px); }
 .money-hud { flex-wrap: nowrap; white-space: nowrap; }
 .ammo-hud { flex-wrap: nowrap; white-space: nowrap; color: #ffd27a; }
 .ammo-hud.hidden, .player-hud .hud-lives.hidden { display: none; }
+/* Пустые патроны: мигаем красным вместо строки в киллфиде */
+.ammo-hud.ammo-empty { color: #ff6b6b; animation: ammoBlink 0.7s ease-in-out 4; }
+@keyframes ammoBlink { 50% { opacity: 0.25; } }
 
 .player-hud .hud-balance, .money-hud .hud-balance { color: var(--gold-text); font-weight: 900; }
 .player-hud .hud-bots, .player-hud .hud-shields, .money-hud .hud-shields { color: var(--blue-text); font-weight: 900; }
@@ -2188,6 +2191,12 @@ html { font-size: clamp(16px, calc(11px + 0.4vw), 21px); }
   .mode-name { font-size: 1.05rem; }
   .mode-desc { font-size: 0.78rem; }
   .char-preview-wrap { height: 160px; }
+  /* MAGA-фото в горизонтали: низкое широкое превью резало лицо cover'ом —
+     показываем фото ЦЕЛИКОМ по центру на тёмной подложке, чётко */
+  .maga-card .char-preview-wrap { background: #101018; }
+  .maga-main { object-fit: contain; object-position: center; }
+  .maga-mini { width: 56px; height: 56px; }
+  .maga-new { top: 8px; right: 8px; }
   .weapon-icon, .weapons-icon { width: 64px; height: 64px; font-size: 2rem; }
 
   /* Игра */

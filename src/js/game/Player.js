@@ -41,7 +41,9 @@ export class Player {
     const box3 = new THREE.Box3().setFromObject(this.group)
     const size = box3.getSize(new THREE.Vector3())
     const h = Math.max(size.y, 1)
-    const s = h / 6 // человек ~1 ед., Kong ~2 ед.
+    // Масштаб модели в руке: всё оружие БОЛЬШОЕ (пулемёт и AK самые крупные)
+    const HAND_SCALE = { knife: 1.5, katana: 1.4, pistol: 1.3, grenade: 1.2, ak: 1.6, mg: 1.7, bus: 1 }
+    const s = (h / 6) * (HAND_SCALE[gun] || 1) // человек ~1 ед., Kong ~2 ед.
     const weapon = new THREE.Group()
 
     const steel = new THREE.MeshStandardMaterial({ color: 0xdfe3e8, metalness: 0.7, roughness: 0.25 })
@@ -59,9 +61,10 @@ export class Player {
     }
 
     if (gun === 'pistol') {
-      add(new THREE.BoxGeometry(0.14 * s, 0.2 * s, 0.42 * s), dark, 0, 0, 0) // корпус
-      add(new THREE.BoxGeometry(0.09 * s, 0.09 * s, 0.3 * s), glow, 0, 0.03 * s, 0.34 * s) // ствол светится
-      add(new THREE.BoxGeometry(0.12 * s, 0.26 * s, 0.14 * s), gripM, 0, -0.2 * s, -0.1 * s) // рукоять
+      add(new THREE.BoxGeometry(0.16 * s, 0.24 * s, 0.5 * s), dark, 0, 0, 0) // корпус
+      add(new THREE.BoxGeometry(0.1 * s, 0.1 * s, 0.36 * s), glow, 0, 0.04 * s, 0.4 * s) // ствол светится
+      add(new THREE.BoxGeometry(0.13 * s, 0.3 * s, 0.15 * s), gripM, 0, -0.24 * s, -0.12 * s) // рукоять
+      add(new THREE.BoxGeometry(0.2 * s, 0.08 * s, 0.1 * s), dark, 0, 0.14 * s, -0.05 * s) // прицел
     } else if (gun === 'grenade') {
       const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.11 * s, 0.13 * s, 0.9 * s, 12), dark)
       tube.rotation.x = Math.PI / 2
@@ -70,29 +73,42 @@ export class Player {
       add(new THREE.BoxGeometry(0.12 * s, 0.24 * s, 0.16 * s), gripM, 0, -0.2 * s, -0.15 * s)
       add(new THREE.SphereGeometry(0.07 * s, 10, 8), glow, 0, 0.14 * s, 0.3 * s) // прицел светится
     } else if (gun === 'ak') {
-      add(new THREE.BoxGeometry(0.11 * s, 0.16 * s, 0.7 * s), dark, 0, 0, 0.1 * s) // ствольная коробка
-      add(new THREE.BoxGeometry(0.07 * s, 0.07 * s, 0.35 * s), steel, 0, 0.02 * s, 0.6 * s) // ствол
-      add(new THREE.BoxGeometry(0.09 * s, 0.3 * s, 0.12 * s), gripM, 0, -0.2 * s, 0.05 * s) // магазин рожком
-      add(new THREE.BoxGeometry(0.1 * s, 0.14 * s, 0.3 * s), gripM, 0, -0.05 * s, -0.35 * s) // приклад
+      add(new THREE.BoxGeometry(0.14 * s, 0.2 * s, 0.9 * s), dark, 0, 0, 0.15 * s) // ствольная коробка
+      add(new THREE.BoxGeometry(0.09 * s, 0.09 * s, 0.5 * s), steel, 0, 0.03 * s, 0.8 * s) // ствол
+      add(new THREE.BoxGeometry(0.11 * s, 0.4 * s, 0.14 * s), gripM, 0, -0.26 * s, 0.1 * s) // магазин рожком
+      add(new THREE.BoxGeometry(0.12 * s, 0.18 * s, 0.42 * s), gripM, 0, -0.06 * s, -0.45 * s) // приклад
+      add(new THREE.BoxGeometry(0.06 * s, 0.14 * s, 0.08 * s), dark, 0, 0.16 * s, 0.55 * s) // мушка
     } else if (gun === 'mg') {
-      add(new THREE.BoxGeometry(0.16 * s, 0.2 * s, 0.8 * s), dark, 0, 0, 0.1 * s) // корпус
-      add(new THREE.BoxGeometry(0.08 * s, 0.08 * s, 0.45 * s), steel, 0, 0.02 * s, 0.7 * s) // ствол
-      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.16 * s, 0.16 * s, 0.12 * s, 14), gripM)
+      add(new THREE.BoxGeometry(0.2 * s, 0.26 * s, 1.0 * s), dark, 0, 0, 0.15 * s) // корпус
+      add(new THREE.BoxGeometry(0.1 * s, 0.1 * s, 0.6 * s), steel, 0, 0.03 * s, 0.9 * s) // ствол
+      add(new THREE.BoxGeometry(0.24 * s, 0.08 * s, 0.3 * s), dark, 0, 0.16 * s, 0.3 * s) // планка сверху
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.22 * s, 0.16 * s, 14), gripM)
       drum.rotation.z = Math.PI / 2
       drum.castShadow = true
-      drum.position.set(0, -0.2 * s, 0.05 * s)
+      drum.position.set(0, -0.26 * s, 0.1 * s)
       weapon.add(drum) // барабан
-      add(new THREE.BoxGeometry(0.1 * s, 0.22 * s, 0.12 * s), gripM, 0, -0.2 * s, -0.3 * s) // рукоять
+      add(new THREE.BoxGeometry(0.12 * s, 0.3 * s, 0.14 * s), gripM, 0, -0.26 * s, -0.38 * s) // рукоять
+      // Сошки
+      ;[-1, 1].forEach(sx => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.03 * s, 0.5 * s, 6), dark)
+        leg.position.set(sx * 0.14 * s, -0.3 * s, 0.75 * s)
+        leg.rotation.x = 0.5
+        leg.rotation.z = sx * 0.4
+        leg.castShadow = true
+        weapon.add(leg)
+      })
     } else if (gun === 'bus') {
       // ОГРОМНЫЙ автобус в руке: 3+ м длиной, больше Человека
       weapon.add(buildBusMesh(s))
     } else if (gun === 'katana') {
-      add(new THREE.BoxGeometry(0.07 * s, 0.1 * s, 1.35 * s), steel, 0, 0, 0.45 * s) // клинок
-      add(new THREE.BoxGeometry(0.22 * s, 0.22 * s, 0.06 * s), dark, 0, 0, -0.25 * s) // гарда
-      add(new THREE.BoxGeometry(0.09 * s, 0.11 * s, 0.4 * s), gripM, 0, 0, -0.48 * s) // рукоять
+      add(new THREE.BoxGeometry(0.09 * s, 0.12 * s, 1.7 * s), steel, 0, 0, 0.6 * s) // клинок
+      add(new THREE.BoxGeometry(0.28 * s, 0.28 * s, 0.07 * s), dark, 0, 0, -0.3 * s) // гарда
+      add(new THREE.BoxGeometry(0.11 * s, 0.13 * s, 0.5 * s), gripM, 0, 0, -0.58 * s) // рукоять
+      add(new THREE.BoxGeometry(0.1 * s, 0.1 * s, 0.06 * s), glow, 0, 0, 0.55 * s) // светящаяся насечка
     } else {
-      add(new THREE.BoxGeometry(0.08 * s, 0.08 * s, 0.55 * s), steel, 0, 0, 0.15 * s) // лезвие
-      add(new THREE.BoxGeometry(0.07 * s, 0.07 * s, 0.3 * s), gripM, 0, 0, -0.27 * s) // рукоять
+      add(new THREE.BoxGeometry(0.1 * s, 0.1 * s, 0.72 * s), steel, 0, 0, 0.2 * s) // лезвие
+      add(new THREE.BoxGeometry(0.09 * s, 0.09 * s, 0.38 * s), gripM, 0, 0, -0.34 * s) // рукоять
+      add(new THREE.BoxGeometry(0.12 * s, 0.12 * s, 0.05 * s), dark, 0, 0, -0.12 * s) // гарда
     }
 
     // В ладонь правой руки: нижняя точка руки в её локальных координатах

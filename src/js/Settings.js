@@ -40,7 +40,7 @@ export const GRAPHICS_PRESETS = {
 }
 
 const STORAGE_KEY = 'gameSettings'
-const DEFAULTS = { fps: 120, graphics: 'ultra', autoRotate: true, controls: 'joystick' }
+const DEFAULTS = { fps: 120, graphics: 'ultra', autoRotate: true, controls: 'joystick', landscape: true }
 
 class Settings {
   constructor() {
@@ -70,6 +70,7 @@ class Settings {
       if (this.data.controls !== 'joystick' && this.data.controls !== 'buttons') {
         this.data.controls = DEFAULTS.controls
       }
+      if (typeof this.data.landscape !== 'boolean') this.data.landscape = DEFAULTS.landscape
     } catch (e) {
       this.data = { ...DEFAULTS }
     }
@@ -117,6 +118,16 @@ class Settings {
 
   set autoRotate(v) {
     this.data.autoRotate = !!v
+  }
+
+  // Горизонтальный экран + полный экран в игре (по умолчанию включено).
+  // Работает только на тач-устройствах, где браузер разрешает.
+  get landscape() {
+    return this.data.landscape !== false
+  }
+
+  set landscape(v) {
+    this.data.landscape = !!v
   }
 
   // Управление для мобилок и ПК с тачем: джойстик или 4 кнопки

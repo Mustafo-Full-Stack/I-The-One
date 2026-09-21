@@ -1,5 +1,5 @@
 // Service Worker для установки игры (PWA): кэш оболочки, оффлайн-запуск.
-const CACHE = 'maga-game-v22'
+const CACHE = 'maga-game-v25'
 const CORE = ['./', './index.html', './manifest.webmanifest', './sigma.jpg', './loading.jpg']
 
 self.addEventListener('install', (e) => {

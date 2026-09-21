@@ -6,6 +6,10 @@ export class CharacterController {
     this.velocity = new THREE.Vector3()
     this.position = this.character.position.clone()
     this.isJumping = false
+    // Прыжок — только по СВЕЖЕМУ нажатию (очередь гасится в update).
+    // Иначе зажатый пробел даёт серию автопрыжков при приземлении —
+    // «персонаж не слушается» после прыжка.
+    this._jumpQueued = false
     this.isMoving = false
     this.moveSpeed = 0.3
     this.jumpPower = 0.5
@@ -41,6 +45,10 @@ export class CharacterController {
         }
       }
       this.keys[e.key.toLowerCase()] = true
+      // Пробел — тоже одноразовая очередь прыжка (игнор автоповтора зажатой клавиши)
+      if ((e.key === ' ' || e.key.toLowerCase() === 'space') && !e.repeat) {
+        this._jumpQueued = true
+      }
     }
     this._onKeyUp = (e) => {
       this.keys[e.key.toLowerCase()] = false
@@ -155,10 +163,10 @@ export class CharacterController {
       { el: window, type: 'mouseup', h: onMouseUp }
     )
 
-    // Кнопка прыжка
+    // Кнопка прыжка: нажатие = одноразовая очередь (не уровень «зажато»).
     const bindJump = (id, key) => {      const el = document.getElementById(id)
       if (!el) return
-      const press = (e) => { e.preventDefault(); this.keys[key] = true }
+      const press = (e) => { e.preventDefault(); this.keys[key] = true; this._jumpQueued = true }
       const release = (e) => { e.preventDefault(); this.keys[key] = false }
       const add = (type, h) => {
         el.addEventListener(type, h, type.startsWith('touch') ? { passive: false } : undefined)
@@ -304,11 +312,12 @@ export class CharacterController {
       // В покое тело сохраняет последнее направление (не возвращается к камере)
     }
 
-    // Прыжок
-    if ((this.keys[' '] || this.keys['space']) && !this.isJumping) {
+    // Прыжок — только по свежей очереди (зажатый пробел/кнопка серию не дают)
+    if (this._jumpQueued && !this.isJumping) {
       this.velocity.y = this.jumpPower
       this.isJumping = true
     }
+    this._jumpQueued = false
 
     // Применение гравитации
     this.velocity.y -= this.gravity * step
@@ -365,5 +374,13 @@ export class CharacterController {
   setKnockedOut(knocked) {
     this.knockedOut = !!knocked
     if (knocked) this.keys = {}
+    else this.resetMotionState() // вернулись на крышу — никакого «прилипания»/подвисания
+  }
+
+  // Сброс полёта: вертикаль в ноль, прыжок не «висит» — управление сразу честное
+  resetMotionState() {
+    this.velocity.y = 0
+    this.isJumping = false
+    this._jumpQueued = false
   }
 }

@@ -258,10 +258,11 @@ export class GameManager {
     window.addEventListener('resize', this.handleResize)
 
     // Удар: F на любом языке (e.code — физическая клавиша, русская «А» тоже работает).
-    // R — перезарядка. Игнорируем, когда фокус в поле ввода.
+    // R — смена оружия. Игнорируем, когда фокус в поле ввода.
     // (G — супер-удар СКРЫТ: см. useSuper ниже.)
     this._attackCd = 0
     this._reloading = 0
+    this._triggerDown = false
     // this._superCd = 0 // СКРЫТО: супер-силы пока не нужны
     this._shake = 0
     this._onAttackKey = (e) => {
@@ -277,20 +278,34 @@ export class GameManager {
       //   return
       // }
       if (e.code !== 'KeyF' || e.repeat) return
-      this.attack()
+      this.pullTrigger()
       if (document.activeElement && document.activeElement.blur) {
         try { document.activeElement.blur() } catch (err) { /* ignore */ }
       }
     }
     window.addEventListener('keydown', this._onAttackKey)
+    // Отпускание спуска (иначе следующий выстрел не взведётся)
+    this._onTriggerUp = (e) => {
+      if (e.code === 'KeyF') this._releaseTrigger()
+    }
+    window.addEventListener('keyup', this._onTriggerUp)
 
-    // Кнопка УДАР на телефоне (рядом с прыжком)
+    // Кнопка УДАР на телефоне (рядом с прыжком): тоже одиночный огонь
     this._attackDomHandlers = []
     const attackBtn = document.getElementById('touch-attack')
     if (attackBtn) {
-      const press = (e) => { e.preventDefault(); this.attack() }
+      const press = (e) => { e.preventDefault(); this.pullTrigger() }
+      const releaseT = (e) => { if (e) e.preventDefault(); this._releaseTrigger() }
       attackBtn.addEventListener('pointerdown', press)
-      this._attackDomHandlers.push({ el: attackBtn, type: 'pointerdown', h: press })
+      attackBtn.addEventListener('pointerup', releaseT)
+      attackBtn.addEventListener('pointercancel', releaseT)
+      attackBtn.addEventListener('pointerleave', releaseT)
+      this._attackDomHandlers.push(
+        { el: attackBtn, type: 'pointerdown', h: press },
+        { el: attackBtn, type: 'pointerup', h: releaseT },
+        { el: attackBtn, type: 'pointercancel', h: releaseT },
+        { el: attackBtn, type: 'pointerleave', h: releaseT }
+      )
     }
     // Кнопка смены оружия на телефоне
     const swapBtn = document.getElementById('touch-swap')
@@ -379,7 +394,9 @@ export class GameManager {
 
     // Доворот взгляда за персонажем. Разворот — только сам yaw: базис движения
     // в него НЕ переписывается (иначе снова вырастет петля обратной связи).
-    if (autoActive) {
+    // В полёте (прыжок) взгляд заморожен — иначе камера уводит и
+    // «после прыжка не идёт в ту сторону».
+    if (autoActive && !this.controller.isJumping) {
       this.camera.softFollowHeading(this.player.group.rotation.y, frameDt, 1.4)
     }
 
@@ -421,12 +438,35 @@ export class GameManager {
     this.renderer.render(this.scene, camera)
   }
 
+  // Спуск: одно нажатие = один выстрел. Повторный огонь только
+  // после отпускания (никаких очередей при зажатой кнопке).
+  pullTrigger() {
+    if (this._triggerDown) return
+    this._triggerDown = true
+    this.attack()
+  }
+
+  _releaseTrigger() {
+    this._triggerDown = false
+  }
+
+  // Вспышка у дула при выстреле
+  _muzzleFlash() {
+    if (!this.player) return
+    const ry = this.player.group.rotation.y
+    const p = this.player.group.position
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffd25e, transparent: true, opacity: 0.95 })
+    const flash = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 10), mat)
+    flash.position.set(p.x + Math.sin(ry) * 1.2, p.y + 1.6, p.z + Math.cos(ry) * 1.2)
+    this.scene.add(flash)
+    this.effects.push({ mesh: flash, mat, ttl: 0.12, max: 0.12, grow: 2 })
+  }
+
   // Удар (F / кнопка УДАР).
-  // Логика простая, в рот целиться НЕ надо:
-  // - катана/кулаки: враг внутри твоего кольца (голубое) — удар попадёт
-  //   с любой стороны;
-  // - нож/пистолет/гранатомёт: персонаж САМ доворачивается на ближайшего
-  //   врага в диапазоне и стреляет (мимо — снаряд летит до конца диапазона).
+  // ОДИНОЧНЫЙ огонь: одно нажатие = один выстрел/удар (никаких очередей).
+  // Затвор взводится только после отпускания (pullTrigger).
+  // - катана/кулаки/автобус: враг внутри кольца — попадёт с любой стороны;
+  // - нож/пистолет/AK/пулемёт/гранатомёт: автодоворот на ближайшего в диапазоне.
   // 1 щит = гасит 1 удар (видно вспышку). Без щитов — вылет с крыши + награда.
   attack() {
     if (!this.isInitialized || !this.player) return
@@ -461,6 +501,7 @@ export class GameManager {
       if (gun.id !== 'knife' && gun.id !== 'bus' && !this._consumeAmmo(gun.id)) return
       if (gun.id === 'grenade') {
         this._fireGrenade(gun)
+        this._muzzleFlash()
         return
       }
       if (gun.id === 'bus') {
@@ -468,6 +509,7 @@ export class GameManager {
         return
       }
       this._throwKnife(gun)
+      this._muzzleFlash()
       return
     }
 
@@ -535,9 +577,17 @@ export class GameManager {
     }
     if (a.reserve > 0) {
       this._reloading = { gunId, t: 1.2 }
-      this._feed('🔫 Перезарядка…')
+      this.refreshHudAmmo() // «🔄» в HUD патронов вместо строки в киллфиде
     } else {
-      this._feed('🔫 Нет патронов — докупи в Оружии')
+      // Нет патронов — мигаем HUD патронов, в киллфид не пишем (там только убийства)
+      const el = document.getElementById('ammo-hud')
+      if (el) {
+        el.textContent = gun.icon + ' 0/0 — докупи в Оружии'
+        el.classList.remove('hidden')
+        el.classList.remove('ammo-empty')
+        void el.offsetWidth
+        el.classList.add('ammo-empty')
+      }
     }
     return false
   }
@@ -548,8 +598,12 @@ export class GameManager {
     const gun = getEquippedWeapon()
     if (gun && AMMO_DEFS[gun.id]) {
       const a = getAmmo(gun.id)
-      el.textContent = gun.icon + ' ' + a.mag + '/' + a.reserve
+      // Во время перезарядки — «🔄», в киллфид про неё не пишем (там только убийства)
+      el.textContent = this._reloading
+        ? gun.icon + ' 🔄…'
+        : gun.icon + ' ' + a.mag + '/' + a.reserve
       el.classList.remove('hidden')
+      el.classList.remove('ammo-empty')
     } else {
       el.textContent = ''
       el.classList.add('hidden')
@@ -599,8 +653,7 @@ export class GameManager {
     this._createRangeRing()
     this.refreshHudWeapon()
     this.refreshHudAmmo()
-    const gun = getEquippedWeapon()
-    this._feed(gun ? (gun.icon + ' ' + gun.name + ' — к бою!') : '🥋 Кулаки — к бою!')
+    // В киллфид про смену оружия не пишем — там только убийства
   }
 
   _resolvePlayerHit(bot) {
@@ -613,9 +666,8 @@ export class GameManager {
       dir.normalize()
       this._launchBot(bot, dir, true)
     } else if (res === 'blocked') {
-      // Щит сгорел — показываем попадание вспышкой и строкой в киллфиде
+      // Щит сгорел — только вспышка. В киллфид НЕ пишем: там только убийства, не удары
       this._flashAt(bp)
-      this._feed(this._meName() + ' ' + ((getEquippedWeapon() || {}).icon || '👊') + ' → 🛡 ' + this._botName(bot))
     }
   }
 
@@ -644,7 +696,9 @@ export class GameManager {
     })
     const gripMat = new THREE.MeshStandardMaterial({ color: 0x4a2a1a, metalness: 0.2, roughness: 0.6 })
     const knife = new THREE.Group()
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.55), bladeMat)
+    // Размер трассера по пушке: пулемёт — самый жирный
+    const bolt = gun.id === 'mg' ? 0.17 : gun.id === 'ak' ? 0.13 : 0.1
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(bolt, bolt, 0.55), bladeMat)
     blade.position.z = 0.2
     knife.add(blade)
     if (!isGun) {
@@ -813,8 +867,8 @@ export class GameManager {
         dir.normalize()
         this._launchBot(bot, dir, true)
       } else if (res === 'blocked') {
+        // Щит выдержал взрыв — только вспышка, в киллфид не пишем (только убийства)
         this._flashAt(bp)
-        this._feed(this._meName() + ' 💣 → 🛡 ' + this._botName(bot))
       }
     }
   }
@@ -921,6 +975,7 @@ export class GameManager {
     this.player.fullRestore()
     this.controller.setPosition(0, 0, 0)
     this.controller.setKnockedOut(false)
+    this.controller.resetMotionState() // полёт обнулён — управление честное сразу
     this.refreshHudShields()
   }
 
@@ -952,7 +1007,8 @@ export class GameManager {
     return 'Бот-' + bot.player.characterInfo.name
   }
 
-  // Киллфид: «Вы 🔪 → 🎯 Бот-Робот» (исчезает через ~4.5 c)
+  // Киллфид: ТОЛЬКО киллы/смерти/итоги (макс 2 строки).
+  // Попадания по щитам и перезарядки сюда НЕ пишем — не спамим экран.
   _feed(text) {
     const feed = document.getElementById('killfeed')
     if (!feed) return
@@ -960,7 +1016,7 @@ export class GameManager {
     item.className = 'killfeed-item'
     item.textContent = text
     feed.prepend(item)
-    while (feed.children.length > 5) feed.removeChild(feed.lastChild)
+    while (feed.children.length > 2) feed.removeChild(feed.lastChild)
     setTimeout(() => { if (item.parentNode) item.parentNode.removeChild(item) }, 4500)
   }
 
@@ -1271,12 +1327,17 @@ export class GameManager {
       window.removeEventListener('keydown', this._onAttackKey)
       this._onAttackKey = null
     }
+    if (this._onTriggerUp) {
+      window.removeEventListener('keyup', this._onTriggerUp)
+      this._onTriggerUp = null
+    }
     if (this._attackDomHandlers) {
       this._attackDomHandlers.forEach(({ el, type, h }) => el.removeEventListener(type, h))
       this._attackDomHandlers = []
     }
     this._attackCd = 0
     this._reloading = 0
+    this._triggerDown = false
     // this._superCd = 0 // СКРЫТО: супер-силы пока не нужны
     this._shake = 0
 

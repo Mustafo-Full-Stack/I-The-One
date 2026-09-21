@@ -47,6 +47,7 @@ function startGame(characterId, testMode, opts = {}) {
 // Тест персонажа из карточки: реальный GameManager, тот же Overview-камера,
 // без изменения selectedCharacter и баланса.
 charactersManager.setOnTest((id) => {
+  enterLandscape()
   startGame(id, true)
 })
 
@@ -115,6 +116,7 @@ document.getElementById('arena-body').addEventListener('click', async (e) => {
   lastArena = getArena(btn.dataset.arena)
   const id = ensureValidSelection(getSelectedCharacterId())
   document.getElementById('arena-screen').classList.remove('active')
+  enterLandscape()
   // Лоадинг СНАЧАЛА, тяжёлый старт — ПОД ним: даём оверлею отрисоваться
   // (2 кадра), потом строим арену и ботов — лага не видно
   const loading = showLoading('Загрузка арены…', 5000)
@@ -138,6 +140,7 @@ document.getElementById('btn-online-back').addEventListener('click', (e) => {
 document.getElementById('btn-back-menu').addEventListener('click', (e) => {
   e.currentTarget.blur()
   gameManager.dispose()
+  exitLandscape()
   if (gameMode === 'test') {
     gameMode = 'menu'
     charactersManager.returnFromTest()
@@ -150,22 +153,26 @@ document.getElementById('btn-back-menu').addEventListener('click', (e) => {
 // Экран победы: ещё раз — та же сложность, в меню — выход
 document.getElementById('btn-win-retry').addEventListener('click', (e) => {
   e.currentTarget.blur()
+  enterLandscape()
   startGame(gameManager.getCurrentCharacterId(), false, { bots: true, difficulty: lastDifficulty, arena: lastArena })
 })
 document.getElementById('btn-win-menu').addEventListener('click', (e) => {
   e.currentTarget.blur()
   gameManager.dispose()
+  exitLandscape()
   gameMode = 'menu'
   menuManager.showMenu()
 })
 // Экран смерти: ещё раз — та же сложность, в меню — выход
 document.getElementById('btn-lose-retry').addEventListener('click', (e) => {
   e.currentTarget.blur()
+  enterLandscape()
   startGame(gameManager.getCurrentCharacterId(), false, { bots: true, difficulty: lastDifficulty, arena: lastArena })
 })
 document.getElementById('btn-lose-menu').addEventListener('click', (e) => {
   e.currentTarget.blur()
   gameManager.dispose()
+  exitLandscape()
   gameMode = 'menu'
   menuManager.showMenu()
 })
@@ -184,10 +191,12 @@ const fpsValue = document.getElementById('fps-value')
 const qualityButtons = document.getElementById('quality-buttons')
 const autoRotateToggle = document.getElementById('autorotate-toggle')
 const controlsButtons = document.getElementById('controls-buttons')
+const landscapeToggle = document.getElementById('landscape-toggle')
 
 let selectedQuality = settings.graphics
 let selectedAutoRotate = settings.autoRotate
 let selectedControls = settings.controls
+let selectedLandscape = settings.landscape
 // Если настройки открыли из игры — после закрытия возвращаемся в игру, а не в меню
 let settingsFromGame = false
 
@@ -203,9 +212,11 @@ function openSettings(fromGame) {
   selectedQuality = settings.graphics
   selectedAutoRotate = settings.autoRotate
   selectedControls = settings.controls
+  selectedLandscape = settings.landscape
   fpsSlider.value = settings.fps
   fpsValue.textContent = settings.fps
   if (autoRotateToggle) autoRotateToggle.checked = selectedAutoRotate
+  if (landscapeToggle) landscapeToggle.checked = selectedLandscape
   updateQualitySelection()
   updateControlsSelection()
   // Прячем меню только если шли из меню; в игре меню и так скрыто
@@ -264,6 +275,18 @@ if (autoRotateToggle) {
   })
 }
 
+// Переключатель горизонтали: вкл — СРАЗУ жёстко в ландшафт (это тап = жест),
+// выкл — выходим из ландшафта прямо сейчас. Сохраняем мгновенно.
+if (landscapeToggle) {
+  landscapeToggle.addEventListener('change', () => {
+    selectedLandscape = landscapeToggle.checked
+    settings.landscape = selectedLandscape
+    settings.save()
+    if (selectedLandscape) enterLandscape()
+    else exitLandscape()
+  })
+}
+
 // Выбор управления
 if (controlsButtons) {
   controlsButtons.addEventListener('click', (e) => {
@@ -282,8 +305,10 @@ document.getElementById('settings-apply').addEventListener('click', (e) => {
   settings.graphics = selectedQuality
   settings.autoRotate = selectedAutoRotate
   settings.controls = selectedControls
+  settings.landscape = selectedLandscape
   settings.save()
   applyControlsVisibility()
+  if (!selectedLandscape) exitLandscape()
   // Применяем к запущенной игре (если игра идёт) — камера переставится мгновенно
   gameManager.applySettings()
   closeSettings()
@@ -765,20 +790,11 @@ document.getElementById('btn-reset-data').addEventListener('click', (e) => {
   window.location.reload()
 })
 
-// Первый вход: лоадинг на весь экран,
-// потом телефоны спрашивают про автоповорот,
-// потом welcome (без имени никак) или меню
+// Первый вход: лоадинг на весь экран, потом welcome (без имени никак) или меню.
+// Горизонталь теперь — настройка (по умолчанию вкл), промпта больше нет.
 menuManager.hideMenu()
 showLoading('Загрузка…', 1800).then(() => {
-  const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
-  let rotateChoice = null
-  try { rotateChoice = localStorage.getItem('rotate_choice_v1') } catch (e) {}
-  if (coarse && !rotateChoice) {
-    const rs = document.getElementById('rotate-screen')
-    if (rs) rs.classList.add('active')
-  } else {
-    proceedBoot()
-  }
+  proceedBoot()
 })
 
 function proceedBoot() {
@@ -789,34 +805,68 @@ function proceedBoot() {
   }
 }
 
-document.getElementById('btn-rotate-on').addEventListener('click', async (e) => {
-  e.currentTarget.blur()
-  // Просим альбомную: сначала фулскрин (так требует Chrome), потом лок
+// Горизонталь + фулскрин как в настоящих играх.
+// Вызывать СИНХРОННО из тапа (иначе браузер зарубит без жеста).
+// ЖЁСТКО: пока настройка вкл и идёт бой/тест — из ландшафта не выходим,
+// выводит только кнопка «Выйти» (exitLandscape) или выкл тумблера.
+function enterLandscape() {
   try {
+    if (!settings.landscape) return
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+    if (!coarse) return
+    const doLock = () => {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {})
+        }
+      } catch (err) { /* ignore */ }
+    }
     const el = document.documentElement
     if (el.requestFullscreen && !document.fullscreenElement) {
-      await el.requestFullscreen().catch(() => {})
-    }
-    if (screen.orientation && screen.orientation.lock) {
-      await screen.orientation.lock('landscape').catch(() => {})
+      // lock — только ПОСЛЕ фулскрина (Chrome без него отклоняет)
+      const p = el.requestFullscreen()
+      if (p && p.then) p.then(doLock, doLock)
+      else doLock()
+    } else {
+      doLock()
     }
   } catch (err) { /* не вышло — играем как есть */ }
-  try { localStorage.setItem('rotate_choice_v1', 'on') } catch (err) {}
-  document.getElementById('rotate-screen').classList.remove('active')
-  proceedBoot()
-})
-document.getElementById('btn-rotate-off').addEventListener('click', (e) => {
-  e.currentTarget.blur()
-  try { localStorage.setItem('rotate_choice_v1', 'off') } catch (err) {}
+}
+
+// Первый тап в бою дожимает фулскрин+ландшафт, если браузер отклонил старт.
+// Вне боя не трогаем ничего.
+document.addEventListener('pointerdown', () => {
   try {
-    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock()
-  } catch (err) {}
-  document.getElementById('rotate-screen').classList.remove('active')
-  proceedBoot()
+    if ((gameMode === 'game' || gameMode === 'test') &&
+        settings.landscape && !document.fullscreenElement) {
+      enterLandscape()
+    }
+  } catch (err) { /* ignore */ }
 })
 
+// Вернулись во фулскрин (свернули/развернули) — повторяем lock, не выходя из боя
+document.addEventListener('fullscreenchange', () => {
+  try {
+    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+    if (document.fullscreenElement && settings.landscape && coarse &&
+        (gameMode === 'game' || gameMode === 'test') &&
+        screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {})
+    }
+  } catch (err) { /* ignore */ }
+})
+
+function exitLandscape() {
+  try {
+    if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock()
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {})
+    }
+  } catch (err) { /* ignore */ }
+}
+
 // Метка сборки в меню — видно, свежая ли версия (против кэша)
-const BUILD = 'v2026-09-20-maga24'
+const BUILD = 'v2026-09-20-maga27'
 const buildTag = document.getElementById('build-tag')
 if (buildTag) buildTag.textContent = BUILD + ' · I the one : MAGA'
 const buildTagSettings = document.getElementById('build-tag-settings')
