@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0a0e27;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    /* Главное меню */
+    .menu-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .menu-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .menu-content {
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .menu-title {
+      font-size: 2.8rem;
+      margin-bottom: 3.5rem;
+      color: #e8edf5;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .menu-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .menu-btn {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      background: #2a3f5f;
+      color: #e8edf5;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .menu-btn:hover {
+      background: #3d5a7d;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .menu-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .menu-btn:first-child {
+      background: #4a7ba7;
+      color: #ffffff;
+    }
+
+    .menu-btn:first-child:hover {
+      background: #5a8fb7;
+    }
+
+    .btn-exit {
+      background: #5c4a4a;
+      margin-top: 0.5rem;
+    }
+
+    .btn-exit:hover {
+      background: #6e5a5a;
+    }
+
+    /* Модальное окно */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 14, 39, 0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #1a1f3a;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      border: 1px solid #2a3f5f;
+      text-align: center;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      animation: modalPopIn 0.25s ease;
+    }
+
+    @keyframes modalPopIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    #modal-text {
+      font-size: 1.1rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+      color: #e8edf5;
+    }
+
+    .modal-btn {
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      background: #4a7ba7;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-btn:hover {
+      background: #5a8fb7;
+      transform: translateY(-2px);
+    }
+
+    /* Игровой контейнер */
+    .game-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+
+    .game-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .game-ui {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+    }
+
+    .back-btn {
+      padding: 0.8rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      background: rgba(42, 63, 95, 0.9);
+      color: #e8edf5;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(4px);
+    }
+
+    .back-btn:hover {
+      background: rgba(61, 90, 125, 0.95);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .back-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+      .menu-title {
+        font-size: 2.2rem;
+        margin-bottom: 2.5rem;
+      }
+
+      .menu-content {
+        max-width: 320px;
+        padding: 1.5rem;
+      }
+
+      .menu-btn {
+        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+      }
+
+      .menu-buttons {
+        gap: 0.9rem;
+      }
+
+      .modal-content {
+        padding: 1.5rem 2rem;
+      }
+
+      #modal-text {
+        font-size: 1rem;
+      }
+
+      .game-ui {
+        top: 15px;
+        left: 15px;
+      }
+
+      .back-btn {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .menu-title {
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+      }
+
+      .menu-content {
+        max-width: 280px;
+        padding: 1rem;
+      }
+
+      .menu-btn {
+        padding: 0.85rem 1.2rem;
+        font-size: 0.9rem;
+      }
+
+      .menu-buttons {
+        gap: 0.8rem;
+      }
+
+      .game-ui {
+        top: 10px;
+        left: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Главное меню -->
+  <div id="main-menu" class="menu-container active">
+    <div class="menu-content">
+      <h1 class="menu-title">3D GAME</h1>
+      <div class="menu-buttons">
+        <button class="menu-btn" id="btn-start">Старт</button>
+        <button class="menu-btn" id="btn-skins">Скины</button>
+        <button class="menu-btn" id="btn-characters">Персонажи</button>
+        <button class="menu-btn" id="btn-settings">Настройки</button>
+        <button class="menu-btn btn-exit" id="btn-exit">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно для сообщений -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modal-text"></p>
+      <button class="modal-btn" id="modal-close">OK</button>
+    </div>
+  </div>
+
+  <!-- Игровой мир -->
+  <div id="game-container" class="game-container hidden">
+    <canvas id="game-canvas"></canvas>
+    <div class="game-ui">
+      <button class="back-btn" id="btn-back-menu">← В меню</button>
+    </div>
+  </div>
+
+  <script>
+    // Проверка загрузки Three.js
+    let threeLoaded = false;
+    const checkThree = setInterval(() => {
+      if (typeof THREE !== 'undefined') {
+        threeLoaded = true;
+        clearInterval(checkThree);
+        initGame();
+      }
+    }, 100);
+
+    setTimeout(() => {
+      if (!threeLoaded) {
+        console.error('Three.js не загрузилась. Пожалуйста, проверьте интернет-соединение.');
+      }
+    }, 5000);
+
+    function initGame() {
+      // Получаем элементы DOM
+      const mainMenu = document.getElementById('main-menu');
+      const gameContainer = document.getElementById('game-container');
+      const modal = document.getElementById('modal');
+      const modalText = document.getElementById('modal-text');
+      const modalClose = document.getElementById('modal-close');
+
+      // Переменные для Three.js
+      let renderer, scene, camera, player;
+      let gameActive = false;
+      let animationId = null;
+
+      // Показать модальное окно
+      function showModal(text) {
+        modalText.textContent = text;
+        modal.classList.add('active');
+      }
+
+      // Скрыть модальное окно
+      function hideModal() {
+        modal.classList.remove('active');
+      }
+
+      // Показать меню
+      function showMenu() {
+        mainMenu.classList.remove('hidden');
+      }
+
+      // Скрыть меню
+      function hideMenu() {
+        mainMenu.classList.add('hidden');
+      }
+
+      // Показать игровой контейнер
+      function showGame() {
+        gameContainer.classList.remove('hidden');
+      }
+
+      // Скрыть игровой контейнер
+      function hideGame() {
+        gameContainer.classList.add('hidden');
+      }
+
+      // Инициализация 3D сцены
+      function initScene() {
+        const canvas = document.getElementById('game-canvas');
+        
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a2332);
+        scene.fog = new THREE.Fog(0x1a2332, 40, 80);
+
+        // Камера
+        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(25, 18, 25);
+        camera.lookAt(0, 2, 0);
+
+        // Освещение
+        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        mainLight.position.set(20, 30, 15);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        mainLight.shadow.camera.left = -50;
+        mainLight.shadow.camera.right = 50;
+        mainLight.shadow.camera.top = 50;
+        mainLight.shadow.camera.bottom = -50;
+        mainLight.shadow.bias = -0.0001;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x9cb4cc, 0.3);
+        fillLight.position.set(-15, 25, -10);
+        scene.add(fillLight);
+
+        const ambientLight = new THREE.AmbientLight(0x8fa5b8, 0.4);
+        scene.add(ambientLight);
+
+        const hemisphereLight = new THREE.HemisphereLight(0x87a7c4, 0x1e2a38, 0.5);
+        scene.add(hemisphereLight);
+
+        // Арена - основной пол
+        const floorGeometry = new THREE.PlaneGeometry(40, 40);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+          color: 0x2d4059,
+          metalness: 0.1,
+          roughness: 0.7
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Внутренняя игровая зона
+        const innerFloorGeometry = new THREE.PlaneGeometry(30, 30);
+        const innerFloorMaterial = new THREE.MeshStandardMaterial({
+          color: 0x37475a,
+          metalness: 0.15,
+          roughness: 0.6
+        });
+        const innerFloor = new THREE.Mesh(innerFloorGeometry, innerFloorMaterial);
+        innerFloor.rotation.x = -Math.PI / 2;
+        innerFloor.position.y = 0.05;
+        innerFloor.receiveShadow = true;
+        scene.add(innerFloor);
+
+        // Бортики арены
+        const borderHeight = 1.5;
+        const borderThickness = 0.8;
+        const arenaSize = 40;
+        const borderMaterial = new THREE.MeshStandardMaterial({
+          color: 0x1e2a38,
+          metalness: 0.4,
+          roughness: 0.6
+        });
+
+        const frontBorderGeometry = new THREE.BoxGeometry(arenaSize, borderHeight, borderThickness);
+        const frontBorder = new THREE.Mesh(frontBorderGeometry, borderMaterial);
+        frontBorder.position.set(0, borderHeight / 2, -arenaSize / 2);
+        frontBorder.castShadow = true;
+        frontBorder.receiveShadow = true;
+        scene.add(frontBorder);
+
+        const backBorder = frontBorder.clone();
+        backBorder.position.z = arenaSize / 2;
+        scene.add(backBorder);
+
+        const sideBorderGeometry = new THREE.BoxGeometry(borderThickness, borderHeight, arenaSize);
+        const leftBorder = new THREE.Mesh(sideBorderGeometry, borderMaterial);
+        leftBorder.position.set(-arenaSize / 2, borderHeight / 2, 0);
+        leftBorder.castShadow = true;
+        leftBorder.receiveShadow = true;
+        scene.add(leftBorder);
+
+        const rightBorder = leftBorder.clone();
+        rightBorder.position.x = arenaSize / 2;
+        scene.add(rightBorder);
+
+        // Угловые столбы
+        const pillarHeight = 4;
+        const pillarRadius = 0.5;
+        const pillarMaterial = new THREE.MeshStandardMaterial({
+          color: 0x4a7ba7,
+          metalness: 0.6,
+          roughness: 0.3
+        });
+        const pillarGeometry = new THREE.CylinderGeometry(pillarRadius, pillarRadius, pillarHeight, 8);
+
+        const corners = [
+          { x: -arenaSize / 2, z: -arenaSize / 2 },
+          { x: arenaSize / 2, z: -arenaSize / 2 },
+          { x: -arenaSize / 2, z: arenaSize / 2 },
+          { x: arenaSize / 2, z: arenaSize / 2 }
+        ];
+
+        corners.forEach(corner => {
+          const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
+          pillar.position.set(corner.x, pillarHeight / 2, corner.z);
+          pillar.castShadow = true;
+          pillar.receiveShadow = true;
+          scene.add(pillar);
+
+          const capGeometry = new THREE.CylinderGeometry(pillarRadius * 1.2, pillarRadius * 1.2, 0.3, 8);
+          const capMaterial = new THREE.MeshStandardMaterial({
+            color: 0x6a9ac4,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0x4a7ba7,
+            emissiveIntensity: 0.2
+          });
+          const cap = new THREE.Mesh(capGeometry, capMaterial);
+          cap.position.set(corner.x, pillarHeight + 0.15, corner.z);
+          cap.castShadow = true;
+          scene.add(cap);
+        });
+
+        // Персонаж
+        player = new THREE.Group();
+        scene.add(player);
+
+        // Голова
+        const headGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+        const headMaterial = new THREE.MeshStandardMaterial({
+          color: 0xf5a57a,
+          metalness: 0.1,
+          roughness: 0.8
+        });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.y = 4.2;
+        head.castShadow = true;
+        head.receiveShadow = true;
+        player.add(head);
+
+        // Туловище
+        const bodyGeometry = new THREE.BoxGeometry(2, 3, 1.2);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+          color: 0x4a7ba7,
+          metalness: 0.2,
+          roughness: 0.7
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 2.2;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        player.add(body);
+
+        // Руки
+        const armGeometry = new THREE.BoxGeometry(0.6, 2.5, 0.6);
+        const armMaterial = new THREE.MeshStandardMaterial({
+          color: 0x5a8fb7,
+          metalness: 0.15,
+          roughness: 0.8
+        });
+        const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+        leftArm.position.set(-1.5, 2.5, 0);
+        leftArm.castShadow = true;
+        leftArm.receiveShadow = true;
+        player.add(leftArm);
+
+        const rightArm = leftArm.clone();
+        rightArm.position.x = 1.5;
+        player.add(rightArm);
+
+        // Ноги
+        const legGeometry = new THREE.BoxGeometry(0.7, 2.5, 0.7);
+        const legMaterial = new THREE.MeshStandardMaterial({
+          color: 0x37475a,
+          metalness: 0.2,
+          roughness: 0.75
+        });
+        const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+        leftLeg.position.set(-0.6, 0.2, 0);
+        leftLeg.castShadow = true;
+        leftLeg.receiveShadow = true;
+        player.add(leftLeg);
+
+        const rightLeg = leftLeg.clone();
+        rightLeg.position.x = 0.6;
+        player.add(rightLeg);
+
+        // Тень под персонажем
+        const shadowGeometry = new THREE.CircleGeometry(1.5, 32);
+        const shadowMaterial = new THREE.MeshBasicMaterial({
+          color: 0x000000,
+          transparent: true,
+          opacity: 0.3
+        });
+        const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
+        shadow.rotation.x = -Math.PI / 2;
+        shadow.position.y = 0.01;
+        player.add(shadow);
+
+        // Сохраняем части персонажа для анимации
+        player.parts = { head, body, leftArm, rightArm, leftLeg, rightLeg };
+        player.animationTime = 0;
+      }
+
+      // Анимационный цикл
+      function animate() {
+        animationId = requestAnimationFrame(animate);
+
+        if (gameActive && player) {
+          player.animationTime += 0.015;
+
+          // Лёгкое покачивание туловища
+          player.parts.body.rotation.y = Math.sin(player.animationTime * 0.8) * 0.05;
+          player.parts.body.position.y = 2.2 + Math.sin(player.animationTime) * 0.05;
+
+          // Покачивание головой
+          player.parts.head.rotation.y = Math.sin(player.animationTime * 0.6) * 0.1;
+
+          // Плавное движение рук
+          player.parts.leftArm.rotation.z = Math.sin(player.animationTime * 0.7) * 0.15;
+          player.parts.rightArm.rotation.z = Math.cos(player.animationTime * 0.7) * 0.15;
+
+          // Лёгкое движение ног (стойка)
+          player.parts.leftLeg.rotation.x = Math.sin(player.animationTime * 0.5) * 0.08;
+          player.parts.rightLeg.rotation.x = Math.cos(player.animationTime * 0.5) * 0.08;
+
+          // Плавное вертикальное покачивание всего персонажа
+          player.position.y = Math.abs(Math.sin(player.animationTime * 0.8)) * 0.15;
+        }
+
+        if (renderer && scene && camera) {
+          renderer.render(scene, camera);
+        }
+      }
+
+      // Обработка изменения размера окна
+      window.addEventListener('resize', () => {
+        if (camera && renderer) {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+      });
+
+      // Обработчики кнопок
+      document.getElementById('btn-start').addEventListener('click', () => {
+        if (!scene) {
+          initScene();
+          gameActive = true;
+          animate();
+        }
+        hideMenu();
+        showGame();
+      });
+
+      document.getElementById('btn-skins').addEventListener('click', () => {
+        showModal('Раздел находится в разработке');
+      });
+
+      document.getElementById('btn-characters').addEventListener('click', () => {
+        showModal('Раздел находится в разработке');
+      });
+
+      document.getElementById('btn-settings').addEventListener('click', () => {
+        showModal('Раздел находится в разработке');
+      });
+
+      document.getElementById('btn-exit').addEventListener('click', () => {
+        showModal('Выход пока недоступен');
+      });
+
+      document.getElementById('btn-back-menu').addEventListener('click', () => {
+        hideGame();
+        showMenu();
+        gameActive = false;
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      });
+
+      modalClose.addEventListener('click', hideModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          hideModal();
+        }
+      });
+
+      console.log('Игра инициализирована');
+    }
+  </script>
+</body>
+</html>

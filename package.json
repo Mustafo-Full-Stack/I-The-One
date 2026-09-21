@@ -1,0 +1,17 @@
+{
+  "name": "game-3d",
+  "version": "1.0.0",
+  "description": "3D Browser Game with Three.js and Vite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.128.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}

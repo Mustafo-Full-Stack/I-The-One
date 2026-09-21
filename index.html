@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>I the one : MAGA</title>
+  <link rel="icon" href="data:,">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#17154f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MAGA">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <!-- Шрифт лежит рядом с игрой (public/fonts): без внешних запросов, работает офлайн и на CrazyGames -->
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/rubik-cyrillic-wght-normal.woff2" crossorigin>
+  <link rel="preload" as="font" type="font/woff2" href="/fonts/rubik-latin-wght-normal.woff2" crossorigin>
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+  <!-- Иконки: один спрайт, дальше <svg class="ico"><use href="#i-..."/></svg> -->
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.6-6.8c.6-.4.6-1.4 0-1.8L9.6 4.3C8.9 3.9 8 4.4 8 5.2z"/></symbol>
+      <symbol id="i-sword" viewBox="0 0 24 24"><g transform="rotate(45 12 12)"><path d="M12 .8l3 4.4v10H9v-10z"/><rect x="5.6" y="15" width="12.8" height="3" rx="1.5"/><rect x="10.4" y="18" width="3.2" height="3.6" rx="1"/><circle cx="12" cy="22.4" r="1.7"/></g></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.7"/><path d="M2 20.5c0-3.8 3-6.3 7-6.3s7 2.5 7 6.3z"/><circle cx="17.4" cy="8.8" r="3"/><path d="M17.4 13.6c2.9.2 4.8 2.1 4.8 5.1v1.8h-4.3c0-2.4-.6-4.3-2.2-5.7.5-.9 1-1.2 1.7-1.2z"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="7.8" r="4.5"/><path d="M3.5 21.5c0-4.7 3.8-7.6 8.5-7.6s8.5 2.9 8.5 7.6z"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" fill="none" stroke="currentColor" stroke-width="3.4" stroke-dasharray="3.38 3.38"/><path fill-rule="evenodd" d="M12 5.4a6.6 6.6 0 1 0 0 13.2 6.6 6.6 0 0 0 0-13.2zm0 3.9a2.7 2.7 0 1 1 0 5.4 2.7 2.7 0 0 1 0-5.4z"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v11"/><path d="M7.2 10.2L12 15l4.8-4.8"/><path d="M4.5 16v2.2c0 1.5 1.2 2.6 2.6 2.6h9.8c1.5 0 2.6-1.2 2.6-2.6V16"/></g></symbol>
+      <symbol id="i-power" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v8.5"/><path d="M6.6 6.9a8.2 8.2 0 1 0 10.8 0"/></g></symbol>
+      <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 4.5L7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 4.5L7.5 12 15 19.5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6.8 2.8h10.4v6.6a5.2 5.2 0 0 1-10.4 0z"/><path d="M6.8 5H3.8v2a3.6 3.6 0 0 0 3.4 3.6M17.2 5h3v2a3.6 3.6 0 0 1-3.4 3.6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="10.4" y="13.8" width="3.2" height="4.4"/><rect x="6.6" y="18" width="10.8" height="3.4" rx="1.4"/></symbol>
+      <symbol id="i-swap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 10.5a8 8 0 0 1 14.2-3.4L20 9"/><path d="M20 4.2V9h-4.8"/><path d="M19.8 13.5a8 8 0 0 1-14.2 3.4L4 15"/><path d="M4 19.8V15h4.8"/></g></symbol>
+      <symbol id="i-impact" viewBox="0 0 24 24"><polygon points="12.00,1.40 14.26,6.55 19.50,4.50 17.45,9.74 22.60,12.00 17.45,14.26 19.50,19.50 14.26,17.45 12.00,22.60 9.74,17.45 4.50,19.50 6.55,14.26 1.40,12.00 6.55,9.74 4.50,4.50 9.74,6.55" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+      <symbol id="i-jump" viewBox="0 0 24 24"><path d="M5 12.6l7-7 7 7M5 19.4l7-7 7 7" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- Лоадинг на весь экран (фото + анимация): виден сразу, гаснет из JS -->
+  <div id="loading-screen" class="loading-screen active">
+    <div class="loading-inner">
+      <div class="loading-title">I THE ONE : MAGA</div>
+      <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
+      <div class="loading-text" id="loading-text">Загрузка…</div>
+    </div>
+  </div>
+
+  <!-- Welcome: обязательная регистрация пользователя при первом запуске -->
+  <div id="welcome-screen" class="welcome-screen">
+    <div class="welcome-card">
+      <div class="welcome-logo">
+        <span class="mt-small">I THE ONE</span>
+        <span class="mt-big" data-text="MAGA">MAGA</span>
+      </div>
+      <h2 class="welcome-title">Добро пожаловать!</h2>
+      <p class="welcome-sub">Зарегистрируйся как пользователь, чтобы играть.<br>Без имени дальше не пустим 🙂</p>
+      <div class="welcome-avatar-wrap">
+        <img id="welcome-avatar-img" class="welcome-avatar hidden" alt="Аватар">
+      </div>
+      <label class="profile-label" for="welcome-name">Твоё имя *</label>
+      <input id="welcome-name" class="profile-input" type="text" maxlength="60" placeholder="Например, Чемпион" autocomplete="nickname">
+      <label class="profile-label" for="welcome-avatar">Аватар (необязательно)</label>
+      <input id="welcome-avatar" class="profile-input profile-file" type="file" accept="image/*">
+      <button class="menu-btn menu-play welcome-go" id="btn-welcome-start">
+        <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl">Начать игру</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Главное меню: слева опции, справа живое 3D-превью героя на постаменте -->
+  <div id="main-menu" class="menu-container active">
+    <div class="menu-topbar">
+      <div class="menu-balance" id="menu-balance"></div>
+      <div class="menu-topbar-actions">
+        <button class="menu-btn menu-round menu-install" id="btn-install" title="Установить игру" aria-label="Установить игру">
+          <svg class="ico" aria-hidden="true"><use href="#i-download"/></svg><span class="lbl">Установить</span>
+        </button>
+        <button class="menu-btn menu-round menu-gear" id="btn-settings" title="Настройки" aria-label="Настройки">
+          <svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg><span class="lbl">Настройки</span>
+        </button>
+        <button class="menu-btn menu-round btn-exit" id="btn-exit" title="Выйти" aria-label="Выйти">
+          <svg class="ico" aria-hidden="true"><use href="#i-power"/></svg><span class="lbl">Выйти</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="menu-content">
+      <div class="menu-left">
+        <h1 class="menu-title" aria-label="I the one : MAGA">
+          <span class="mt-small">I THE ONE</span>
+          <span class="mt-big" data-text="MAGA">MAGA</span>
+        </h1>
+        <div class="menu-buttons">
+          <button class="menu-btn menu-play" id="btn-start">
+            <svg class="ico" aria-hidden="true"><use href="#i-play"/></svg><span class="lbl">Играть</span>
+          </button>
+          <div class="menu-tiles">
+            <button class="menu-btn menu-tile" id="btn-weapons">
+              <svg class="ico" aria-hidden="true"><use href="#i-sword"/></svg><span class="lbl">Оружие</span>
+            </button>
+            <button class="menu-btn menu-tile" id="btn-characters">
+              <svg class="ico" aria-hidden="true"><use href="#i-users"/></svg><span class="lbl">Персонажи</span>
+            </button>
+            <button class="menu-btn menu-tile" id="btn-profile">
+              <svg class="ico" aria-hidden="true"><use href="#i-user"/></svg><span class="lbl">Профиль</span>
+            </button>
+          </div>
+          <div class="build-tag" id="build-tag"></div>
+        </div>
+      </div>
+      <div class="menu-hero">
+        <div class="menu-hero-frame">
+          <canvas id="menu-hero-canvas"></canvas>
+        </div>
+        <div class="menu-hero-name" id="menu-hero-name"></div>
+        <div class="menu-hero-stats" id="menu-hero-stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Выбор режима игры -->
+  <div id="mode-screen" class="mode-screen">
+    <div class="mode-head">
+      <h2 class="mode-title">Режим игры</h2>
+      <button class="characters-back" id="btn-mode-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="mode-body">
+      <div class="mode-balance" id="mode-balance"></div>
+      <button class="mode-card" id="btn-mode-bots">
+        <span class="mode-icon">🤖</span>
+        <span class="mode-name">Играть с ботами</span>
+        <span class="mode-desc">Локальная игра: боты по уровню и карте</span>
+      </button>
+      <button class="mode-card" id="btn-mode-online">
+        <span class="mode-icon">🌐</span>
+        <span class="mode-name">Играть онлайн</span>
+        <span class="mode-desc">Против живых игроков</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Выбор сложности (только для игры с ботами) -->
+  <div id="diff-screen" class="mode-screen">
+    <div class="mode-head">
+      <h2 class="mode-title">Уровень</h2>
+      <button class="characters-back" id="btn-diff-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="mode-body" id="diff-body">
+      <button class="mode-card" data-diff="easy">
+        <span class="mode-icon">🌱</span>
+        <span class="mode-name">Легко</span>
+        <span class="mode-desc">Боты с 1 щитом · ❤️❤️</span>
+        <span class="diff-reward">+$100 за килл</span>
+      </button>
+      <button class="mode-card" data-diff="medium">
+        <span class="mode-icon">⚔️</span>
+        <span class="mode-name">Средне</span>
+        <span class="mode-desc">Боты с 2 щитами · ❤️❤️</span>
+        <span class="diff-reward">+$250 за килл</span>
+      </button>
+      <button class="mode-card" data-diff="hard">
+        <span class="mode-icon">🔥</span>
+        <span class="mode-name">Сложно</span>
+        <span class="mode-desc">Боты с 2–3 щитами, быстрее · ❤️</span>
+        <span class="diff-reward">+$500 за килл</span>
+      </button>
+      <button class="mode-card" data-diff="impossible">
+        <span class="mode-icon">💀</span>
+        <span class="mode-name">Невозможно</span>
+        <span class="mode-desc">Три Короля с катанами · ❤️</span>
+        <span class="diff-reward">+$1,500 за килл</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Выбор карты -->
+  <div id="arena-screen" class="mode-screen">
+    <div class="mode-head">
+      <h2 class="mode-title">Карта</h2>
+      <button class="characters-back" id="btn-arena-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="mode-body" id="arena-body">
+      <button class="mode-card" data-arena="roof60">
+        <span class="mode-icon">🏢</span>
+        <span class="mode-name">Крыша 60</span>
+        <span class="mode-desc">60×60 · 5 игроков · быстрые бои</span>
+      </button>
+      <button class="mode-card" data-arena="roof80">
+        <span class="mode-icon">🌃</span>
+        <span class="mode-name">Крыша 80</span>
+        <span class="mode-desc">80×80 · 8 игроков · есть где разбежаться</span>
+      </button>
+      <button class="mode-card" data-arena="roof100">
+        <span class="mode-icon">🌆</span>
+        <span class="mode-name">Крыша 100</span>
+        <span class="mode-desc">100×100 · 10 игроков · долгая охота</span>
+      </button>
+      <button class="mode-card" data-arena="roof120">
+        <span class="mode-icon">🌇</span>
+        <span class="mode-name">Крыша 120</span>
+        <span class="mode-desc">120×120 · 12 игроков · золотая арена-монстр</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Онлайн-режим (заготовка: нужен сервер, честно говорим) -->
+  <div id="online-screen" class="weapons-screen">
+    <div class="weapons-head">
+      <h2 class="weapons-title">Онлайн</h2>
+      <button class="characters-back" id="btn-online-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="weapons-body">
+      <div class="weapons-card">
+        <div class="weapons-icon">🌐</div>
+        <p class="weapons-text">Онлайн-режим скоро появится.</p>
+        <p class="weapons-sub">Для игры с живыми игроками нужен сервер и netcode — их пока нет. Сейчас доступна игра с ботами.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Установка игры: отдельный раздел под каждое устройство -->
+  <div id="install-screen" class="weapons-screen">
+    <div class="weapons-head">
+      <h2 class="weapons-title">Установка</h2>
+      <button class="characters-back" id="btn-install-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="weapons-body">
+      <div class="weapons-card" id="install-auto-card" style="display:none">
+        <div class="weapons-icon">📲</div>
+        <p class="weapons-text">Браузер предлагает установку</p>
+        <p class="weapons-sub">Нажми — появится системное окно.</p>
+        <button class="weapon-buy" id="btn-install-auto">Установить автоматически</button>
+      </div>
+      <div class="weapons-grid install-grid" id="install-grid">
+        <button class="weapon-card" data-install="android">
+          <span class="weapon-icon">🤖</span>
+          <span class="weapon-name">Android · Chrome</span>
+          <span class="weapon-desc">Нажми — покажем шаги карточкой</span>
+        </button>
+        <button class="weapon-card" data-install="ios">
+          <span class="weapon-icon">🍏</span>
+          <span class="weapon-name">iPhone · Safari</span>
+          <span class="weapon-desc">Нажми — покажем шаги карточкой</span>
+        </button>
+        <button class="weapon-card" data-install="windows">
+          <span class="weapon-icon">🪟</span>
+          <span class="weapon-name">Windows · Edge / Chrome</span>
+          <span class="weapon-desc">Нажми — покажем шаги карточкой</span>
+        </button>
+        <button class="weapon-card" data-install="linux">
+          <span class="weapon-icon">🐧</span>
+          <span class="weapon-name">Linux · Firefox</span>
+          <span class="weapon-desc">Нажми — покажем шаги карточкой</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Карточка инструкции установки (поверх экрана) -->
+  <div id="install-card" class="install-card-overlay hidden">
+    <div class="install-card">
+      <div class="weapon-icon" id="install-card-icon">📲</div>
+      <p class="weapons-text" id="install-card-title">Установка</p>
+      <p class="weapons-sub" id="install-card-text"></p>
+      <button class="weapon-buy" id="btn-install-card-ok">Понятно!</button>
+    </div>
+  </div>
+
+  <!-- Модальное окно для сообщений -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modal-text"></p>
+      <button class="modal-btn" id="modal-close">OK</button>
+    </div>
+  </div>
+
+  <!-- Панель настроек -->
+  <div id="settings-panel" class="settings-panel">
+    <div class="settings-content">
+      <h2 class="settings-title">Настройки</h2>
+
+      <div class="setting-row">
+        <label class="setting-label" for="fps-slider">
+          Ограничение FPS: <span id="fps-value">60</span>
+        </label>
+        <input type="range" id="fps-slider" class="slider" min="30" max="160" step="1" value="60">
+        <div class="slider-marks"><span>30</span><span>60</span><span>120</span><span>160</span></div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Качество графики</span>
+        <div class="quality-buttons" id="quality-buttons">
+          <button class="quality-btn" data-quality="low">Лёгкий</button>
+          <button class="quality-btn" data-quality="medium">Средний</button>
+          <button class="quality-btn" data-quality="high">Высокий</button>
+          <button class="quality-btn" data-quality="ultra">Ультра</button>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Камера</span>
+        <p class="setting-value">Обзор · сверху</p>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label setting-label-row" for="autorotate-toggle">
+          <span>Автовращение камеры</span>
+          <span class="switch">
+            <input type="checkbox" id="autorotate-toggle" checked>
+            <span class="switch-slider"></span>
+          </span>
+        </label>
+        <p class="camera-desc">Обзорная камера сверху-по диагонали. При включении она мягко следует за направлением бега (в любую сторону: вперёд, назад, стрейфы, диагонали). При выключении — камера полностью ручная. Ручной обзор мышью/пальцем ставит паузу на пару секунд. Камера не закручивается в бесконечное вращение.</p>
+      </div>
+
+      <div class="setting-row">
+        <span class="setting-label">Управление (мобилки и ПК с тачем)</span>
+        <div class="quality-buttons" id="controls-buttons">
+          <button class="quality-btn" data-controls="joystick">🕹 Джойстик</button>
+          <button class="quality-btn" data-controls="buttons">🔘 4 кнопки</button>
+        </div>
+        <p class="camera-desc">Джойстик — плавный стик. 4 кнопки — крестовина ▲▼◀▶, удобно большими пальцами.</p>
+      </div>
+
+      <p class="settings-hint">FPS, тени и автовращение применяются сразу. Сглаживание — при следующем запуске игры. Камера: тяните мышью на ПК или пальцем на телефоне, чтобы осмотреться; колесо или щипок — зум.</p>
+
+      <div class="setting-row">
+        <label class="setting-label" for="promo-input">Промокод</label>
+        <div class="promo-row">
+          <input id="promo-input" class="profile-input" type="text" maxlength="64" placeholder="Вставь код" autocomplete="off">
+          <button class="settings-btn primary" id="btn-promo-apply">OK</button>
+        </div>
+        <p class="promo-note" id="promo-note">Один код — одно использование. Подбор блокируется на минуту.</p>
+      </div>
+
+      <div class="settings-actions">
+        <button class="settings-btn primary" id="settings-apply">Применить</button>
+        <button class="settings-btn" id="settings-close">Закрыть</button>
+      </div>
+      <div class="settings-actions settings-danger">
+        <button class="settings-btn danger" id="btn-reset-data">🗑 Сбросить все данные</button>
+      </div>
+      <p class="version-tag">Version : 0.5v · <span id="build-tag-settings"></span></p>
+    </div>
+  </div>
+
+  <!-- Экран выбора персонажа -->
+  <div id="characters-screen" class="characters-screen">
+    <div class="characters-head">
+      <h2 class="characters-title">Персонажи</h2>
+      <button class="characters-back" id="btn-characters-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <p class="characters-note">11 персонажей · доступны Человек, MAGA и Воин · победа даёт награду в кошелёк</p>
+    <div class="characters-wallet" id="chars-wallet"></div>
+    <div class="characters-grid" id="characters-grid"></div>
+  </div>
+
+  <!-- Экран оружия -->
+  <div id="weapons-screen" class="weapons-screen">
+    <div class="weapons-head">
+      <h2 class="weapons-title">Оружие</h2>
+      <button class="characters-back" id="btn-weapons-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <p class="characters-note">Покупайте оружие за деньги кошелька — дальность удара растёт</p>
+    <div class="characters-wallet" id="weapons-wallet"></div>
+    <div class="weapons-grid" id="weapons-grid"></div>
+    <div class="weapons-toast hidden" id="weapons-toast"></div>
+  </div>
+
+  <!-- Экран профиля игрока -->
+  <div id="profile-screen" class="profile-screen">
+    <div class="profile-head">
+      <h2 class="profile-title">Мой профиль</h2>
+      <button class="characters-back" id="btn-profile-back"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>Назад</span></button>
+    </div>
+    <div class="profile-body">
+      <div id="profile-view" class="profile-view"></div>
+      <form id="profile-form" class="profile-form hidden" onsubmit="return false">
+        <div id="profile-avatar-preview" class="profile-avatar-preview">
+          <img id="profile-avatar-img" class="hidden" alt="Аватар">
+          <div id="profile-avatar-empty" class="profile-avatar-empty">👤</div>
+        </div>
+        <label class="profile-label" for="profile-name">Имя *</label>
+        <input id="profile-name" class="profile-input" type="text" maxlength="60" placeholder="Мустафо" autocomplete="nickname">
+
+        <label class="profile-label" for="profile-avatar-input">Аватар (optional)</label>
+        <input id="profile-avatar-input" class="profile-input profile-file" type="file" accept="image/*">
+
+        <label class="profile-label" for="profile-about">О себе (optional)</label>
+        <textarea id="profile-about" class="profile-input profile-textarea" maxlength="500" rows="3" placeholder="О себе..."></textarea>
+
+        <label class="profile-label" for="profile-email">Gmail (optional, без пароля)</label>
+        <input id="profile-email" class="profile-input" type="email" maxlength="120" placeholder="example@gmail.com" autocomplete="email">
+
+        <label class="profile-label" for="profile-code">Код для локальной защиты (optional, только этот браузер)</label>
+        <input id="profile-code" class="profile-input" type="password" maxlength="64" placeholder="PIN / код" autocomplete="off">
+        <p class="profile-note">Код не отправляется никуда и хранится только как hash. Без кода профиль сохраняется открыто в этом браузере.</p>
+      </form>
+      <div class="profile-actions">
+        <button class="settings-btn" id="btn-profile-edit">Редактировать</button>
+        <button class="settings-btn primary" id="btn-profile-save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Игровой мир -->
+  <div id="game-container" class="game-container hidden">
+    <canvas id="game-canvas"></canvas>
+    <div class="game-ui game-ui-left">
+      <button class="back-btn" id="btn-back-menu"><svg class="ico" aria-hidden="true"><use href="#i-back"/></svg><span>← В меню</span></button>
+      <div class="player-hud" id="player-hud"></div>
+    </div>
+    <div class="game-ui game-ui-right">
+      <div class="money-hud" id="money-hud"></div>
+      <div class="ammo-hud hidden" id="ammo-hud"></div>
+      <button class="icon-btn" id="btn-victory" title="Симулировать победу" aria-label="Симулировать победу"><svg class="ico" aria-hidden="true"><use href="#i-trophy"/></svg></button>
+      <button class="icon-btn" id="btn-game-settings" title="Настройки" aria-label="Настройки"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg></button>
+    </div>
+    <div class="killfeed" id="killfeed"></div>
+    <div class="controls-hint">
+      <div class="controls-row">
+        <span class="key">W</span>
+      </div>
+      <div class="controls-row">
+        <span class="key">A</span><span class="key">S</span><span class="key">D</span>
+      </div>
+      <div class="controls-hint-text">движение</div>
+      <div class="controls-row">
+        <span class="key key-wide">ПРОБЕЛ</span>
+      </div>
+      <div class="controls-hint-text">прыжок</div>
+      <div class="controls-row">
+        <span class="key key-wide">F</span>
+      </div>
+      <div class="controls-hint-text">удар</div>
+      <div class="controls-row">
+        <span class="key key-wide">R</span>
+      </div>
+      <div class="controls-hint-text">смена оружия</div>
+      <div class="controls-hint-text controls-hint-orbit">🖱 тяни мышью — обзор · колесо — зум</div>
+    </div>
+    <div class="touch-controls" id="touch-controls">
+      <div class="joystick" id="joystick" aria-label="Джойстик">
+        <div class="joystick-knob" id="joystick-knob"></div>
+      </div>
+      <div class="dpad hidden" id="dpad" aria-label="Кнопки движения">
+        <span></span><button class="dpad-btn" data-dir="up" aria-label="Вперёд"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></button><span></span>
+        <button class="dpad-btn" data-dir="left" aria-label="Влево"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></button><button class="dpad-btn" data-dir="down" aria-label="Назад"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></button><button class="dpad-btn" data-dir="right" aria-label="Вправо"><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></button>
+      </div>
+      <div class="touch-actions">
+        <button class="swap-btn" id="touch-swap" aria-label="Сменить оружие"><svg class="ico" aria-hidden="true"><use href="#i-swap"/></svg></button>
+        <button class="attack-btn" id="touch-attack" aria-label="Удар"><svg class="ico" aria-hidden="true"><use href="#i-impact"/></svg><span>Удар</span></button>
+        <button class="jump-btn" id="touch-jump" aria-label="Прыжок"><svg class="ico" aria-hidden="true"><use href="#i-jump"/></svg><span>Прыжок</span></button>
+      </div>
+    </div>
+    <div class="orbit-hint" id="orbit-hint">👆 веди пальцем по экрану — обзор · щипок — зум</div>
+  </div>
+
+  <!-- Автоповорот для телефона: предложить landscape при входе -->
+  <div id="rotate-screen" class="win-screen">
+    <div class="win-card">
+      <div class="win-icon">📱</div>
+      <h2 class="win-title">Играть горизонтально?</h2>
+      <p class="win-sub">Включи автоповорот — арена шире и удобнее. Или играй как есть.</p>
+      <div class="win-actions">
+        <button class="settings-btn primary" id="btn-rotate-on">Включить</button>
+        <button class="settings-btn" id="btn-rotate-off">Не надо</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран выхода: игра реально закрывается -->
+  <div id="exit-screen" class="win-screen">
+    <div class="win-card">
+      <div class="win-icon">👋</div>
+      <h2 class="win-title">Спасибо за игру!</h2>
+      <p class="win-sub">Прогресс, деньги и покупки сохранены</p>
+      <div class="win-actions">
+        <button class="settings-btn" id="btn-exit-back">Вернуться</button>
+        <button class="settings-btn primary" id="btn-exit-close">Закрыть вкладку</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран смерти: сердечки закончились -->
+  <div id="lose-screen" class="win-screen lose-screen">
+    <div class="win-card lose-card">
+      <div class="win-icon">💀</div>
+      <h2 class="win-title">Сердечки закончились!</h2>
+      <p class="win-sub">Ты выбит и больше не вернёшься</p>
+      <p class="win-stats" id="lose-stats"></p>
+      <div class="win-actions">
+        <button class="settings-btn primary" id="btn-lose-retry">Ещё раз</button>
+        <button class="settings-btn" id="btn-lose-menu">В меню</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран победы: все боты выбиты -->
+  <div id="win-screen" class="win-screen">
+    <div class="win-card">
+      <div class="win-icon">🏆</div>
+      <h2 class="win-title">Победа!</h2>
+      <p class="win-sub">Все боты выбиты с крыши</p>
+      <p class="win-stats" id="win-stats"></p>
+      <div class="win-actions">
+        <button class="settings-btn primary" id="btn-win-retry">Ещё раз</button>
+        <button class="settings-btn" id="btn-win-menu">В меню</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

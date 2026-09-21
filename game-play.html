@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Game - С управлением</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0e27;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    #game-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .game-ui {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      background: rgba(26, 31, 58, 0.85);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #2a3f5f;
+      backdrop-filter: blur(4px);
+      max-width: 300px;
+    }
+
+    .character-selector {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(26, 31, 58, 0.95);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid #2a3f5f;
+      backdrop-filter: blur(4px);
+      max-width: 350px;
+    }
+
+    .character-selector h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #e8edf5;
+    }
+
+    .character-btn {
+      display: block;
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      background: #2a3f5f;
+      border: 1px solid #3d5a7d;
+      border-radius: 4px;
+      color: #e8edf5;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    .character-btn:hover {
+      background: #3d5a7d;
+      border-color: #4a7ba7;
+    }
+
+    .character-btn.active {
+      background: #4a7ba7;
+      border-color: #5a8fb7;
+      box-shadow: 0 0 10px rgba(74, 123, 167, 0.5);
+    }
+
+    .model-input {
+      width: 100%;
+      padding: 0.6rem;
+      margin-top: 0.8rem;
+      margin-bottom: 0.5rem;
+      background: rgba(42, 63, 95, 0.5);
+      border: 1px solid #2a3f5f;
+      border-radius: 4px;
+      color: #e8edf5;
+      font-size: 0.85rem;
+    }
+
+    .model-input::placeholder {
+      color: #5a7fa5;
+    }
+
+    .model-status {
+      font-size: 0.8rem;
+      color: #9cb4cc;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+
+    .model-status.loading {
+      color: #4a7ba7;
+    }
+
+    .model-status.success {
+      color: #4caf50;
+    }
+
+    .model-status.error {
+      color: #ff6b6b;
+    }
+
+    .game-ui h3 {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: #e8edf5;
+    }
+
+    .controls {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: #9cb4cc;
+    }
+
+    .controls div {
+      margin-bottom: 0.3rem;
+    }
+
+    .controls strong {
+      color: #4a7ba7;
+      min-width: 60px;
+      display: inline-block;
+    }
+
+    @media (max-width: 768px) {
+      .game-ui {
+        top: 10px;
+        left: 10px;
+        padding: 1rem;
+        font-size: 0.85rem;
+        max-width: 250px;
+      }
+
+      .game-ui h3 {
+        font-size: 0.9rem;
+        margin-bottom: 0.8rem;
+      }
+
+      .controls {
+        font-size: 0.8rem;
+        line-height: 1.5;
+      }
+    }
+
+    .loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(26, 31, 58, 0.95);
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid #2a3f5f;
+      text-align: center;
+      z-index: 1000;
+    }
+
+    .loading.hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">
+    <h2>Загрузка игры...</h2>
+    <p id="loading-text">Инициализация Three.js...</p>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div class="game-ui">
+    <h3>⌨️ Управление</h3>
+    <div class="controls">
+      <div><strong>W / ↑</strong>Вперёд</div>
+      <div><strong>S / ↓</strong>Назад</div>
+      <div><strong>A / ←</strong>Влево</div>
+      <div><strong>D / →</strong>Вправо</div>
+      <div><strong>SPACE</strong>Прыжок</div>
+    </div>
+  </div>
+
+  <div class="character-selector">
+    <h3>👤 Персонажи</h3>
+    <button class="character-btn active" data-model="default">Встроенный персонаж</button>
+    <button class="character-btn" data-url="https://gobkit.com/api/free">Gobkit (онлайн)</button>
+    <button class="character-btn" data-model="local">/models/character.glb</button>
+    
+    <input 
+      type="text" 
+      class="model-input" 
+      id="custom-url" 
+      placeholder="Или введите URL модели GLB..."
+    >
+    <button class="character-btn" id="load-custom">Загрузить модель</button>
+    
+    <div class="model-status" id="model-status" style="display: none;"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@r128/examples/js/loaders/GLTFLoader.js"></script>
+  
+  <script>
+    // Проверка загрузки Three.js
+    let threeLoaded = false
+    let gltfLoaded = false
+    let checkCount = 0
+    const checkThree = setInterval(() => {
+      checkCount++
+      if (typeof THREE !== 'undefined') {
+        threeLoaded = true
+      }
+      if (typeof THREE.GLTFLoader !== 'undefined') {
+        gltfLoaded = true
+      }
+      if (threeLoaded && gltfLoaded) {
+        clearInterval(checkThree)
+        document.getElementById('loading-text').textContent = 'Инициализация...'
+        initGame()
+      }
+      if (checkCount > 100) { // 10 секунд
+        clearInterval(checkThree)
+        console.error('Не удалось загрузить Three.js или GLTFLoader')
+        document.getElementById('loading-text').textContent = 'Ошибка загрузки библиотек'
+      }
+    }, 100)
+
+    function initGame() {
+      console.log('Инициализация игры...')
+      
+      const canvas = document.getElementById('game-canvas')
+      const loading = document.getElementById('loading')
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setPixelRatio(window.devicePixelRatio)
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
+
+      // Scene
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(0x1a2332)
+      scene.fog = new THREE.Fog(0x1a2332, 40, 80)
+
+      // Camera
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000)
+      camera.position.set(25, 18, 25)
+      camera.lookAt(0, 2, 0)
+
+      // Lighting
+      const mainLight = new THREE.DirectionalLight(0xffffff, 0.8)
+      mainLight.position.set(20, 30, 15)
+      mainLight.castShadow = true
+      mainLight.shadow.mapSize.set(2048, 2048)
+      mainLight.shadow.camera.left = -50
+      mainLight.shadow.camera.right = 50
+      mainLight.shadow.camera.top = 50
+      mainLight.shadow.camera.bottom = -50
+      mainLight.shadow.camera.near = 0.5
+      mainLight.shadow.camera.far = 100
+      mainLight.shadow.bias = -0.0001
+      scene.add(mainLight)
+
+      const ambientLight = new THREE.AmbientLight(0x8fa5b8, 0.4)
+      scene.add(ambientLight)
+
+      const hemisphereLight = new THREE.HemisphereLight(0x87a7c4, 0x1e2a38, 0.5)
+      scene.add(hemisphereLight)
+
+      // Арена - пол
+      const floorGeometry = new THREE.PlaneGeometry(40, 40)
+      const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x2d4059, metalness: 0.1, roughness: 0.7 })
+      const floor = new THREE.Mesh(floorGeometry, floorMaterial)
+      floor.rotation.x = -Math.PI / 2
+      floor.receiveShadow = true
+      scene.add(floor)
+
+      // Внутренний пол
+      const innerFloorGeometry = new THREE.PlaneGeometry(30, 30)
+      const innerFloorMaterial = new THREE.MeshStandardMaterial({ color: 0x37475a, metalness: 0.15, roughness: 0.6 })
+      const innerFloor = new THREE.Mesh(innerFloorGeometry, innerFloorMaterial)
+      innerFloor.rotation.x = -Math.PI / 2
+      innerFloor.position.y = 0.05
+      innerFloor.receiveShadow = true
+      scene.add(innerFloor)
+
+      // Бортики
+      const borderMaterial = new THREE.MeshStandardMaterial({ color: 0x1e2a38, metalness: 0.4, roughness: 0.6 })
+      
+      const borderGeometry = new THREE.BoxGeometry(40, 1.5, 0.8)
+      const frontBorder = new THREE.Mesh(borderGeometry, borderMaterial)
+      frontBorder.position.set(0, 0.75, -20)
+      frontBorder.castShadow = true
+      frontBorder.receiveShadow = true
+      scene.add(frontBorder)
+
+      const backBorder = frontBorder.clone()
+      backBorder.position.z = 20
+      scene.add(backBorder)
+
+      const sideBorderGeometry = new THREE.BoxGeometry(0.8, 1.5, 40)
+      const leftBorder = new THREE.Mesh(sideBorderGeometry, borderMaterial)
+      leftBorder.position.set(-20, 0.75, 0)
+      leftBorder.castShadow = true
+      leftBorder.receiveShadow = true
+      scene.add(leftBorder)
+
+      const rightBorder = leftBorder.clone()
+      rightBorder.position.x = 20
+      scene.add(rightBorder)
+
+      // Столбы
+      const pillarGeometry = new THREE.CylinderGeometry(0.5, 0.5, 4, 8)
+      const pillarMaterial = new THREE.MeshStandardMaterial({ color: 0x4a7ba7, metalness: 0.6, roughness: 0.3 })
+      
+      const pillarPositions = [
+        { x: -20, z: -20 },
+        { x: 20, z: -20 },
+        { x: -20, z: 20 },
+        { x: 20, z: 20 }
+      ]
+
+      pillarPositions.forEach(pos => {
+        const pillar = new THREE.Mesh(pillarGeometry, pillarMaterial)
+        pillar.position.set(pos.x, 2, pos.z)
+        pillar.castShadow = true
+        pillar.receiveShadow = true
+        scene.add(pillar)
+      })
+
+      // Персонаж
+      const playerGroup = new THREE.Group()
+      scene.add(playerGroup)
+
+      let playerParts = {}
+
+      function createPlayer() {
+        playerGroup.clear()
+
+        // Голова
+        const headGeometry = new THREE.SphereGeometry(1.2, 32, 32)
+        const headMaterial = new THREE.MeshStandardMaterial({ color: 0xf5a57a, metalness: 0.1, roughness: 0.8 })
+        const head = new THREE.Mesh(headGeometry, headMaterial)
+        head.position.y = 4.2
+        head.castShadow = true
+        head.receiveShadow = true
+        playerGroup.add(head)
+
+        // Туловище
+        const bodyGeometry = new THREE.BoxGeometry(2, 3, 1.2)
+        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4a7ba7, metalness: 0.2, roughness: 0.7 })
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial)
+        body.position.y = 2.2
+        body.castShadow = true
+        body.receiveShadow = true
+        playerGroup.add(body)
+
+        // Руки
+        const armGeometry = new THREE.BoxGeometry(0.6, 2.5, 0.6)
+        const armMaterial = new THREE.MeshStandardMaterial({ color: 0x5a8fb7, metalness: 0.15, roughness: 0.8 })
+        
+        const leftArm = new THREE.Mesh(armGeometry, armMaterial)
+        leftArm.position.set(-1.5, 2.5, 0)
+        leftArm.castShadow = true
+        leftArm.receiveShadow = true
+        playerGroup.add(leftArm)
+
+        const rightArm = leftArm.clone()
+        rightArm.position.x = 1.5
+        playerGroup.add(rightArm)
+
+        // Ноги
+        const legGeometry = new THREE.BoxGeometry(0.7, 2.5, 0.7)
+        const legMaterial = new THREE.MeshStandardMaterial({ color: 0x37475a, metalness: 0.2, roughness: 0.75 })
+        
+        const leftLeg = new THREE.Mesh(legGeometry, legMaterial)
+        leftLeg.position.set(-0.6, 0.2, 0)
+        leftLeg.castShadow = true
+        leftLeg.receiveShadow = true
+        playerGroup.add(leftLeg)
+
+        const rightLeg = leftLeg.clone()
+        rightLeg.position.x = 0.6
+        playerGroup.add(rightLeg)
+
+        // Тень
+        const shadowGeometry = new THREE.CircleGeometry(1.5, 32)
+        const shadowMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3 })
+        const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial)
+        shadow.rotation.x = -Math.PI / 2
+        shadow.position.y = 0.01
+        playerGroup.add(shadow)
+
+        playerParts = { head, body, leftArm, rightArm, leftLeg, rightLeg }
+      }
+
+      createPlayer()
+
+      // Функция для загрузки готовой модели
+      function loadModelFromURL(url) {
+        console.log('Загрузка модели:', url)
+        
+        // Используем глобальный THREE.GLTFLoader
+        if (typeof THREE.GLTFLoader === 'undefined') {
+          console.error('GLTFLoader не загружена')
+          showStatus('❌ GLTFLoader не загружена', 'error')
+          return
+        }
+        
+        const loader = new THREE.GLTFLoader()
+        
+        loader.load(
+          url,
+          (gltf) => {
+            console.log('Модель загружена!')
+            playerGroup.clear()
+            
+            const model = gltf.scene
+            model.traverse((node) => {
+              if (node.isMesh) {
+                node.castShadow = true
+                node.receiveShadow = true
+              }
+            })
+            
+            playerGroup.add(model)
+            playerParts = {}
+            
+            // Масштабируем модель если нужно
+            if (model.scale.length() < 1) {
+              model.scale.multiplyScalar(2)
+            }
+            
+            showStatus('✅ Модель загружена успешно!', 'success')
+          },
+          undefined,
+          (error) => {
+            console.error('Ошибка загрузки модели:', error)
+            showStatus('❌ Ошибка загрузки модели', 'error')
+            playerGroup.clear()
+            createPlayer()
+          }
+        )
+      }
+
+      // Примеры готовых моделей для загрузки
+      // Раскомментируй одну строку ниже для загрузки модели:
+      
+      // loadModelFromURL('https://gobkit.com/api/free') // Gobkit API
+      // loadModelFromURL('/models/character.glb') // Локальная модель
+
+      // Обработчики кнопок персонажей
+      const characterBtns = document.querySelectorAll('.character-btn')
+      const modelStatus = document.getElementById('model-status')
+      const customUrlInput = document.getElementById('custom-url')
+      const loadCustomBtn = document.getElementById('load-custom')
+
+      function showStatus(message, type) {
+        modelStatus.textContent = message
+        modelStatus.className = `model-status ${type}`
+        modelStatus.style.display = 'block'
+        
+        if (type !== 'loading') {
+          setTimeout(() => {
+            modelStatus.style.display = 'none'
+          }, 3000)
+        }
+      }
+
+      characterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          characterBtns.forEach(b => b.classList.remove('active'))
+          btn.classList.add('active')
+
+          if (btn.dataset.model === 'default') {
+            playerGroup.clear()
+            createPlayer()
+            showStatus('✅ Встроенный персонаж загружен', 'success')
+          } else if (btn.dataset.url) {
+            showStatus('⏳ Загрузка модели...', 'loading')
+            loadModelFromURL(btn.dataset.url)
+          } else if (btn.dataset.model === 'local') {
+            showStatus('⏳ Загрузка локальной модели...', 'loading')
+            loadModelFromURL('/models/character.glb')
+          }
+        })
+      })
+
+      loadCustomBtn.addEventListener('click', () => {
+        const url = customUrlInput.value.trim()
+        if (url) {
+          characterBtns.forEach(b => b.classList.remove('active'))
+          showStatus('⏳ Загрузка модели по URL...', 'loading')
+          loadModelFromURL(url)
+        } else {
+          showStatus('❌ Введите URL модели', 'error')
+        }
+      })
+
+      customUrlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          loadCustomBtn.click()
+        }
+      })
+
+      // Управление
+      const keys = {}
+      const position = new THREE.Vector3(0, 0, 0)
+      const velocity = new THREE.Vector3(0, 0, 0)
+      let isJumping = false
+
+      window.addEventListener('keydown', (e) => {
+        keys[e.key.toLowerCase()] = true
+      })
+
+      window.addEventListener('keyup', (e) => {
+        keys[e.key.toLowerCase()] = false
+      })
+
+      let animationTime = 0
+      const clock = new THREE.Clock()
+
+      // Скрыть экран загрузки
+      loading.classList.add('hidden')
+
+      // Анимационный цикл
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const deltaTime = clock.getDelta()
+
+        // Движение
+        const direction = new THREE.Vector3()
+        if (keys['w'] || keys['arrowup']) direction.z -= 1
+        if (keys['s'] || keys['arrowdown']) direction.z += 1
+        if (keys['a'] || keys['arrowleft']) direction.x -= 1
+        if (keys['d'] || keys['arrowright']) direction.x += 1
+
+        if (direction.length() > 0) {
+          direction.normalize()
+          position.x += direction.x * 0.3
+          position.z += direction.z * 0.3
+
+          const angle = Math.atan2(direction.x, direction.z)
+          playerGroup.rotation.y = angle
+        }
+
+        // Прыжок
+        if ((keys[' '] || keys['space']) && !isJumping) {
+          velocity.y = 0.5
+          isJumping = true
+        }
+
+        // Гравитация
+        velocity.y -= 0.02
+        position.y += velocity.y
+
+        // Земля
+        if (position.y <= 0) {
+          position.y = 0
+          velocity.y = 0
+          isJumping = false
+        }
+
+        // Ограничение
+        const limit = 20
+        position.x = Math.max(-limit, Math.min(limit, position.x))
+        position.z = Math.max(-limit, Math.min(limit, position.z))
+
+        playerGroup.position.copy(position)
+
+        // Анимация персонажа
+        if (playerParts.body) {
+          animationTime += 0.015
+
+          playerParts.body.rotation.y = Math.sin(animationTime * 0.8) * 0.05
+          playerParts.body.position.y = 2.2 + Math.sin(animationTime) * 0.05
+
+          playerParts.head.rotation.y = Math.sin(animationTime * 0.6) * 0.1
+
+          playerParts.leftArm.rotation.z = Math.sin(animationTime * 0.7) * 0.15
+          playerParts.rightArm.rotation.z = Math.cos(animationTime * 0.7) * 0.15
+
+          playerParts.leftLeg.rotation.x = Math.sin(animationTime * 0.5) * 0.08
+          playerParts.rightLeg.rotation.x = Math.cos(animationTime * 0.5) * 0.08
+        }
+
+        // Камера следует за персонажем
+        const cameraDistance = 25
+        camera.position.x = position.x + cameraDistance
+        camera.position.z = position.z + cameraDistance
+        camera.lookAt(position.x, position.y + 2, position.z)
+
+        renderer.render(scene, camera)
+      }
+
+      // Изменение размера окна
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      })
+
+      // Запуск анимации
+      animate()
+      console.log('Игра запущена!')
+    }
+  </script>
+</body>
+</html>
